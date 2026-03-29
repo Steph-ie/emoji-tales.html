@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fairy Tale World Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #map { height: 100vh; }
+
+    .emoji-marker {
+      font-size: 26px;
+      text-align: center;
+    }
+
+    .controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+      z-index: 1000;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    button {
+      margin: 5px 0;
+      width: 100%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <b>Filters</b><br/>
+  <button onclick="showAll()">Show All</button>
+  <button onclick="filterCategory('love')">💛 Love Stories</button>
+  <button onclick="filterCategory('adventure')">⚔️ Adventure</button>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+
+const map = L.map('map').setView([20, 0], 2);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+// Story dataset
+const stories = [
+  {
+    title: "Cinderella",
+    coords: [51.1657, 10.4515],
+    emoji: "👠",
+    category: ["love"],
+    text: {
+      en: "A magical love story.",
+      zh: "一个神奇的爱情故事。",
+      de: "Eine magische Liebesgeschichte."
+    }
+  },
+  {
+    title: "Journey to the West",
+    coords: [35.8617, 104.1954],
+    emoji: "🐒",
+    category: ["adventure"],
+    text: {
+      en: "A monk and a monkey on a journey.",
+      zh: "和尚和猴子的冒险旅程。"
+    }
+  },
+  {
+    title: "Momotaro",
+    coords: [36.2048, 138.2529],
+    emoji: "🍑",
+    category: ["adventure"],
+    text: {
+      en: "A boy born from a peach.",
+      ja: "桃から生まれた男の子。"
+    }
+  }
+];
+
+let markers = [];
+
+// Create markers
+function loadStories(data) {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
+  data.forEach(story => {
+    const icon = L.divIcon({
+      className: 'emoji-marker',
+      html: story.emoji
+    });
+
+    const marker = L.marker(story.coords, { icon }).addTo(map);
+
+    marker.bindPopup(createPopup(story));
+
+    markers.push(marker);
+  });
+}
+
+// Popup with language selector
+function createPopup(story) {
+  let options = Object.keys(story.text).map(lang =>
+    `<option value="${lang}">${lang}</option>`
+  ).join("");
+
+  return `
+    <b>${story.title}</b><br/>
+    <select onchange="changeLanguage(this, '${story.title}')">
+      ${options}
+    </select>
+    <p id="text-${story.title}">
+      ${story.text[Object.keys(story.text)[0]]}
+    </p>
+  `;
+}
+
+// Change language
+function changeLanguage(select, title) {
+  const story = stories.find(s => s.title === title);
+  const lang = select.value;
+  document.getElementById("text-" + title).innerText = story.text[lang];
+}
+
+// Filters
+function filterCategory(cat) {
+  const filtered = stories.filter(s => s.category.includes(cat));
+  loadStories(filtered);
+}
+
+function showAll() {
+  loadStories(stories);
+}
+
+// Initial load
+loadStories(stories);
+
+</script>
+
+</body>
+</html>
